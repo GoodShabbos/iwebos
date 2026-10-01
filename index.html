@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="iWebOS — a fake desktop experience in the browser, styled after the iPhone's Liquid Glass design." />
+  <title>iWebOS</title>
+
+  <!-- Design system & global styles (load order matters) -->
+  <link rel="stylesheet" href="./styles/globals.css" />   <!-- reset, variables, body backdrop -->
+  <link rel="stylesheet" href="./styles/glass.css" />     <!-- liquid-glass surface utilities -->
+  <link rel="stylesheet" href="./styles/desktop.css" />   <!-- wallpaper, top bar, dock, icons -->
+  <link rel="stylesheet" href="./styles/windows.css" />   <!-- window frames, traffic lights, resize -->
+  <link rel="stylesheet" href="./styles/apps.css" />      <!-- per-app inner layouts -->
+  <link rel="stylesheet" href="./styles/app-icons.css" /> <!-- icon grid, labels, selection states -->
+  <link rel="stylesheet" href="./styles/lockscreen.css" /><!-- lock screen / power overlay -->
+
+  <!-- App manifests (static data, loaded before the shell) -->
+  <script type="module" src="./js/apps/welcome.js"></script>
+  <script type="module" src="./js/apps/notes.js"></script>
+  <script type="module" src="./js/apps/photos.js"></script>
+  <script type="module" src="./js/apps/about.js"></script>
+  <script type="module" src="./js/apps/settings.js"></script>
+  <script type="module" src="./js/apps/terminal.js"></script>
+  <script type="module" src="./js/apps/music.js"></script>
+  <script type="module" src="./js/apps/browser.js"></script>
+  <script type="module" src="./js/apps/arcade.js"></script>
+
+  <!-- OS kernel: window management, wallpaper, top bar, dock, boot -->
+  <script type="module" src="./js/wallpaper.js"></script>
+  <script type="module" src="./js/topbar.js"></script>
+  <script src="./js/window-manager.js" defer></script>
+  <script src="./js/lockscreen.js" defer></script>
+  <script type="module" src="./js/desktop.js"></script>
+  <script type="module" src="./js/main.js"></script>
+</head>
+<body>
+  <!-- Boot splash placeholder (style it later) -->
+  <div id="boot-splash">iWebOS</div>
+
+  <!-- Everything the OS renders lives here; main.js injects the shell -->
+  <div id="os-root"></div>
+</body>
+</body>
+</html>
