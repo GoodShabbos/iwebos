@@ -426,3 +426,20 @@ body:not(.is-locked) .glass-toggle {
   text-shadow: none;
   background-image: none !important;
 }
+/* ---- lock-screen intro: buttons stay hidden until the lock icon has faded ----
+   !important because wallpaper.js writes inline opacity/transition on these. */
+body.lock-intro .lock-screen__unlock,
+body.lock-intro .glass-toggle {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+body.lock-reveal .lock-screen__unlock,
+body.lock-reveal .glass-toggle {
+  transition: opacity 700ms ease-out !important;
+}
+
+.lock-screen__timer {
+  margin-left: 2px;
+  font-variant-numeric: tabular-nums; /* steady width while counting down */
+}

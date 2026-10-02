@@ -8,10 +8,12 @@ import { renderWallpaperCycler } from './wallpaper-cycler.js';
 import { renderLockScreen } from './lock-screen.js';
 import { renderTaskbar } from './taskbar.js';
 import { renderLogo } from './logo.js';
+import { renderOsClock } from './os-clock.js';
 import { openCredits } from './credits-window.js';
 import { openSettings } from './settings-window.js';
 import { openNotepad } from './notepad-window.js';
 import { openFiles } from './files-window.js';
+import { openCalculator } from './calculator-window.js';
 
 function renderShell(rootEl) {
   rootEl.innerHTML = '';
@@ -23,12 +25,14 @@ function renderShell(rootEl) {
   document.addEventListener('oslogin', () => {
     renderTaskbar(document.body);
     renderLogo(document.body);
+    renderOsClock(document.body);
   }, { once: true });
   document.addEventListener('app-launch', (e) => {
     if (e.detail.id === 'credits') openCredits();
     if (e.detail.id === 'settings') openSettings();
     if (e.detail.id === 'notepad') openNotepad();
     if (e.detail.id === 'files') openFiles();
+    if (e.detail.id === 'calculator') openCalculator();
   });
 }
 

@@ -1,6 +1,8 @@
-// notepad-window.js — the Notepad app: a Markdown editor with live preview,
-// built on the shared glass window. Notes save into the pretend file system
-// (fs.js), so they show up in the File Explorer — and vanish on reload.
+// notepad-window.js — the Notepad app, styled after the iPhone's Notes: a
+// "‹ Files" back button, centered date, large bold title, a plain writing
+// area, a bottom toolbar and a yellow "Done" that saves. It still edits
+// Markdown (Edit / Preview) and saves into the pretend file system (fs.js),
+// so notes show up in Files — and vanish on reload.
 
 import { createGlassWindow } from './glass-window.js';
 import { renderMarkdown } from './markdown.js';
@@ -8,64 +10,134 @@ import { getFile, saveFile } from './fs.js';
 
 const open = []; // { id, win } for every open notepad, oldest first
 
+const svg = (body) =>
+  `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
+const ICONS = {
+  back: svg('<path d="M15 4.5L7.5 12l7.5 7.5" stroke-width="2.6"/>'),
+  list: svg('<circle cx="5" cy="7" r="1.2" fill="currentColor"/><circle cx="5" cy="12" r="1.2" fill="currentColor"/><circle cx="5" cy="17" r="1.2" fill="currentColor"/><path d="M9.5 7H20M9.5 12H20M9.5 17H20"/>'),
+  compose: svg('<path d="M11 4.5H7A2.5 2.5 0 0 0 4.5 7v10A2.5 2.5 0 0 0 7 19.5h10a2.5 2.5 0 0 0 2.5-2.5v-4"/><path d="M17.5 3.8a1.9 1.9 0 0 1 2.700 2.700L12 14.700 8.500 15.500l.8-3.500Z"/>'),
+};
+
+const dateText = (ms) => new Date(ms).toLocaleString('en-US', {
+  month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit',
+}).replace(/(\d{4}),? (?:at )?/, '$1 at '); // "October 2, 2026 at 2:05 PM"
+
 function mount(body, entry) {
   const saved = entry.id ? getFile(entry.id) : null;
   body.innerHTML = `
-    <div class="notepad__toolbar">
-      <input class="notepad__name" type="text" spellcheck="false" maxlength="60" aria-label="File name">
-      <div class="settings__segmented notepad__view" role="radiogroup" aria-label="View">
-        <button type="button" role="radio" data-view="edit">Edit</button>
-        <button type="button" role="radio" data-view="split">Split</button>
-        <button type="button" role="radio" data-view="preview">Preview</button>
+    <div class="ios np">
+      <header class="ios__nav">
+        <div class="ios__nav-left"><button type="button" class="ios__back" data-act="files">${ICONS.back}<span>Files</span></button></div>
+        <div class="np__seg" role="radiogroup" aria-label="View">
+          <button type="button" role="radio" data-view="edit">Edit</button>
+          <button type="button" role="radio" data-view="preview">Preview</button>
+        </div>
+        <div class="ios__nav-right"><button type="button" class="ios__text-btn is-bold np__done" data-act="done">Done</button></div>
+      </header>
+      <div class="np__page">
+        <p class="np__date"></p>
+        <input class="np__title" type="text" spellcheck="false" maxlength="60" placeholder="Title" aria-label="Note title">
+        <textarea class="np__editor" spellcheck="false" aria-label="Note" placeholder="Start writing…  Markdown works: # heading, **bold**, - list"></textarea>
+        <div class="np__preview md" aria-label="Preview"></div>
       </div>
-      <span class="notepad__status" aria-live="polite"></span>
-      <button class="glass-button notepad__save" type="button">Save</button>
-    </div>
-    <div class="notepad__panes" data-view="split">
-      <textarea class="notepad__editor" spellcheck="false" aria-label="Markdown editor"
-        placeholder="Write some Markdown…  # Heading, **bold**, *italic*, - lists"></textarea>
-      <div class="notepad__preview md" aria-label="Preview"></div>
+      <div class="np__toolbar">
+        <button type="button" class="np__tool" data-fmt="heading" aria-label="Heading"><span class="np__aa">Aa</span></button>
+        <button type="button" class="np__tool" data-fmt="bold" aria-label="Bold"><b>B</b></button>
+        <button type="button" class="np__tool" data-fmt="list" aria-label="Bulleted list">${ICONS.list}</button>
+        <span class="np__spacer"></span>
+        <button type="button" class="np__tool" data-act="compose" aria-label="New note">${ICONS.compose}</button>
+      </div>
     </div>`;
 
-  const nameEl = body.querySelector('.notepad__name');
-  const editor = body.querySelector('.notepad__editor');
-  const preview = body.querySelector('.notepad__preview');
-  const panes = body.querySelector('.notepad__panes');
-  const status = body.querySelector('.notepad__status');
+  const q = (s) => body.querySelector(s);
+  const titleEl = q('.np__title');
+  const editor = q('.np__editor');
+  const preview = q('.np__preview');
+  const page = q('.np__page');
+  const dateEl = q('.np__date');
+  const doneBtn = q('.np__done');
 
-  nameEl.value = saved ? saved.name : 'Untitled.md';
+  titleEl.value = saved ? saved.name : 'Untitled.md';
   editor.value = saved ? saved.content : '';
   let savedName = saved ? saved.name : null;
   let savedContent = saved ? saved.content : null;
+  dateEl.textContent = dateText(saved ? saved.modified : Date.now());
 
   const refreshPreview = () => {
     preview.innerHTML = editor.value.trim()
       ? renderMarkdown(editor.value)
-      : '<p class="notepad__hint">Nothing to preview yet.</p>';
+      : '<p class="np__hint">Nothing to preview yet.</p>';
   };
-  const refreshStatus = () => {
-    const dirty = savedContent === null || editor.value !== savedContent || nameEl.value !== savedName;
-    status.textContent = dirty ? (savedContent === null ? 'Not saved' : 'Unsaved changes') : 'Saved';
-    status.classList.toggle('is-dirty', dirty);
+  // Done is yellow when there is something to save, grey once it's saved.
+  const refreshDone = () => {
+    doneBtn.disabled = savedContent !== null && editor.value === savedContent && titleEl.value === savedName;
   };
 
   let raf = 0;
   editor.addEventListener('input', () => {
-    refreshStatus();
+    refreshDone();
     cancelAnimationFrame(raf);
     raf = requestAnimationFrame(refreshPreview);
   });
-  nameEl.addEventListener('input', refreshStatus);
+  titleEl.addEventListener('input', refreshDone);
+  titleEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); editor.focus(); }
+  });
 
   const save = () => {
-    const file = saveFile({ id: entry.id, name: nameEl.value, content: editor.value });
+    const file = saveFile({ id: entry.id, name: titleEl.value, content: editor.value });
     entry.id = file.id;
-    nameEl.value = file.name;
+    titleEl.value = file.name;
     savedName = file.name;
     savedContent = file.content;
-    refreshStatus();
+    dateEl.textContent = dateText(file.modified);
+    refreshDone();
   };
-  body.querySelector('.notepad__save').addEventListener('click', save);
+
+  // ---- Edit / Preview ----
+  const segButtons = [...body.querySelectorAll('.np__seg [data-view]')];
+  const setView = (view) => {
+    page.dataset.view = view;
+    for (const b of segButtons) {
+      const on = b.dataset.view === view;
+      b.classList.toggle('is-on', on);
+      b.setAttribute('aria-checked', String(on));
+    }
+    if (view === 'edit') editor.focus();
+  };
+  for (const b of segButtons) b.addEventListener('click', () => setView(b.dataset.view));
+
+  // ---- bottom toolbar: small Markdown helpers ----
+  const prefixLine = (prefix) => {
+    const start = editor.value.lastIndexOf('\n', editor.selectionStart - 1) + 1;
+    const has = editor.value.startsWith(prefix, start);
+    editor.setRangeText(has ? '' : prefix, start, has ? start + prefix.length : start, 'preserve');
+  };
+  const FORMAT = {
+    heading: () => prefixLine('# '),
+    list: () => prefixLine('- '),
+    bold: () => {
+      const { selectionStart: a, selectionEnd: b } = editor;
+      editor.setRangeText(`**${editor.value.slice(a, b)}**`, a, b, 'end');
+      if (a === b) editor.setSelectionRange(a + 2, a + 2);
+    },
+  };
+
+  body.addEventListener('click', (e) => {
+    const fmt = e.target.closest('[data-fmt]');
+    if (fmt) {
+      setView('edit');
+      FORMAT[fmt.dataset.fmt]();
+      editor.focus();
+      editor.dispatchEvent(new Event('input'));
+      return;
+    }
+    const act = e.target.closest('[data-act]')?.dataset.act;
+    if (act === 'done') save();
+    else if (act === 'compose') newNote();
+    else if (act === 'files') document.dispatchEvent(new CustomEvent('app-launch', { detail: { id: 'files' } }));
+  });
+
   body.closest('.glass-window').addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
       e.preventDefault();
@@ -81,20 +153,9 @@ function mount(body, entry) {
     editor.dispatchEvent(new Event('input'));
   });
 
-  const viewButtons = [...body.querySelectorAll('[data-view]')].filter((b) => b.tagName === 'BUTTON');
-  const setView = (view) => {
-    panes.dataset.view = view;
-    for (const b of viewButtons) {
-      const on = b.dataset.view === view;
-      b.classList.toggle('is-selected', on);
-      b.setAttribute('aria-checked', String(on));
-    }
-  };
-  for (const b of viewButtons) b.addEventListener('click', () => setView(b.dataset.view));
-  setView('split');
-
+  setView('edit');
   refreshPreview();
-  refreshStatus();
+  refreshDone();
   requestAnimationFrame(() => editor.focus());
 }
 
@@ -102,10 +163,10 @@ function mount(body, entry) {
 function create(fileId) {
   const entry = { id: fileId, win: null };
   entry.win = createGlassWindow({
-    title: 'Notepad',
+    title: 'Notes',
     className: 'notepad-window',
-    width: 780,
-    height: 520,
+    width: 420,
+    height: 640,
     onClose: () => open.splice(open.indexOf(entry), 1),
     mount: (body) => mount(body, entry),
   });
@@ -115,7 +176,7 @@ function create(fileId) {
 
 /**
  * Taskbar click: focus the newest notepad, or open a blank one.
- * With a fileId (from the File Explorer): focus that file's notepad, or open it.
+ * With a fileId (from Files): focus that file's notepad, or open it.
  */
 export function openNotepad(fileId = null) {
   const match = fileId ? open.find((e) => e.id === fileId) : open[open.length - 1];

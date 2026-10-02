@@ -1,6 +1,8 @@
 // lock-screen.js — visual iPhone-style lock screen. Unlock is local-only;
 // no authentication or backend is connected yet.
 
+const LOCK_HOLD_MS = 10000; // how long the lock icon stays before the buttons appear
+
 let cleanupLens = null;
 
 const LOCK_ICON = `
@@ -24,7 +26,7 @@ export function renderLockScreen(root = document.body) {
         <div class="lock-screen__lens"></div>
         ${LOCK_ICON}
       </div>
-      <p class="lock-screen__state">Locked</p>
+      <p class="lock-screen__state">Locked <span class="lock-screen__timer" aria-hidden="true"></span></p>
       <button class="lock-screen__unlock" type="button">Unlock</button>
     </div>
   `;
@@ -100,7 +102,7 @@ export function renderLockScreen(root = document.body) {
       setTimeout(() => {
         passcode.classList.add('is-unlocking');
         screen.classList.add('is-unlocking');
-        document.body.classList.remove('is-locked');
+        document.body.classList.remove('is-locked', 'lock-intro');
         document.body.classList.add('is-unlocked');
         document.dispatchEvent(new CustomEvent('oslogin'));
         setTimeout(() => {
@@ -122,12 +124,36 @@ export function renderLockScreen(root = document.body) {
     });
   });
 
-  // Once the new wallpaper and corner controls are revealed, fade only the
-  // centered lock mark away. The Unlock button stays available at the bottom.
+  // Intro sequence: clock → wallpaper (wallpaper.js) → lock icon held for
+  // LOCK_HOLD_MS → icon fades out → Unlock + corner buttons fade in.
+  // body.lock-intro keeps those buttons hidden until then (see desktop.css).
+  document.body.classList.add('lock-intro');
+  let revealed = false;
+  const revealControls = () => {
+    if (revealed || !screen.isConnected) return;
+    revealed = true;
+    screen.classList.add('is-idle'); // fades the lock icon + "Locked" away
+    setTimeout(() => {
+      document.body.classList.add('lock-reveal');
+      document.body.classList.remove('lock-intro');
+      setTimeout(() => document.body.classList.remove('lock-reveal'), 800);
+    }, 650);
+  };
+  // Countdown next to "Locked" while the icon is held on screen.
+  const timerEl = screen.querySelector('.lock-screen__timer');
+  const showTime = (secs) => { timerEl.textContent = `· 0:${String(secs).padStart(2, '0')}`; };
+  showTime(Math.round(LOCK_HOLD_MS / 1000));
   document.addEventListener('wallpaperrevealed', () => {
-    if (!screen.isConnected) return;
-    setTimeout(() => screen.classList.add('is-idle'), 320);
+    const end = Date.now() + LOCK_HOLD_MS;
+    const tick = setInterval(() => {
+      const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+      showTime(left);
+      if (left === 0 || revealed || !screen.isConnected) clearInterval(tick);
+    }, 250);
+    setTimeout(revealControls, LOCK_HOLD_MS);
   }, { once: true });
+  // Safety net: never leave the controls hidden if the reveal event is missed.
+  setTimeout(revealControls, LOCK_HOLD_MS + 8000);
 
   return screen;
 }

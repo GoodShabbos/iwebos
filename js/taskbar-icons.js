@@ -73,11 +73,6 @@ const calculator = () => {
   return icon('calc', ['#3d3d41', '#1b1b1d'], dots);
 };
  
-const terminal = () => icon('term', ['#35353a', '#050506'], `
-  <path d="M17 22.5 29 32 17 41.5" fill="none" stroke="#32d74b" stroke-width="4.6"
-        stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M34 44h14" stroke="#fff" stroke-width="4.6" stroke-linecap="round"/>`);
- 
 const settings = () => {
   const teeth = Array.from({ length: 8 }, (_, i) =>
     `<rect x="28" y="10.5" width="8" height="10" rx="2.4" transform="rotate(${i * 45} 32 32)"/>`).join('');
@@ -99,7 +94,6 @@ const credits = () => icon('credits', ['#ff7eb3', '#b04dff'], `
 export const TASKBAR_APPS = [
   { id: 'files',      label: 'File Explorer', svg: files },
   { id: 'notepad',    label: 'Notepad',       svg: notepad },
-  { id: 'terminal',   label: 'Terminal',      svg: terminal },
   { id: 'calculator', label: 'Calculator',    svg: calculator },
   { id: 'settings',   label: 'Settings',      svg: settings },
   { id: 'credits',    label: 'Credits',       svg: credits },

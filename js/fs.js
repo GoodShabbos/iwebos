@@ -19,7 +19,7 @@ function cleanName(raw) {
 // "Notes.md" → "Notes 2.md" when another file already has the name.
 function uniqueName(name, selfId, folder) {
   const taken = new Set([...files.values()]
-    .filter((f) => f.id !== selfId && f.folder === folder)
+    .filter((f) => f.id !== selfId && f.folder === folder && !f.deleted)
     .map((f) => f.name.toLowerCase()));
   if (!taken.has(name.toLowerCase())) return name;
   const dot = name.lastIndexOf('.');
@@ -31,8 +31,9 @@ function uniqueName(name, selfId, folder) {
   }
 }
 
-export function listFiles(folder) {
-  return [...files.values()].filter((f) => !folder || f.folder === folder).sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+/** Files in `folder` (or everywhere). `deleted` lists Recently Deleted instead. */
+export function listFiles(folder, deleted = false) {
+  return [...files.values()].filter((f) => (!folder || f.folder === folder) && !!f.deleted === deleted).sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 }
 
 export function getFile(id) {
@@ -41,7 +42,8 @@ export function getFile(id) {
 
 /** Create or update a file; a missing/deleted id creates a new one. */
 export function saveFile({ id, name, content, folder }) {
-  const existing = id ? files.get(id) : null;
+  let existing = id ? files.get(id) : null;
+  if (existing?.deleted) existing = null; // a deleted file saves as a new one
   const fileId = existing ? existing.id : `f${++seq}`;
   const where = existing ? existing.folder : (folder || DEFAULT_FOLDER);
   const file = {
@@ -56,7 +58,25 @@ export function saveFile({ id, name, content, folder }) {
   return file;
 }
 
+/** Delete moves a file to Recently Deleted (like iOS); purgeFile removes it for good. */
 export function deleteFile(id) {
+  const f = files.get(id);
+  if (f && !f.deleted) {
+    f.deleted = Date.now();
+    emit();
+  }
+}
+
+export function restoreFile(id) {
+  const f = files.get(id);
+  if (f?.deleted) {
+    delete f.deleted;
+    f.name = uniqueName(f.name, f.id, f.folder);
+    emit();
+  }
+}
+
+export function purgeFile(id) {
   if (files.delete(id)) emit();
 }
 
