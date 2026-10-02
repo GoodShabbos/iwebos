@@ -211,6 +211,13 @@ body.wallpaper-booting .lock-screen__content {
   transition: background-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
 }
 
+/* light mode: black text/icons on the lock screen (set by wallpaper.js) */
+body[data-wallpaper-mode="light"] .glass-toggle,
+body[data-wallpaper-mode="light"] .lock-screen__unlock {
+  color: #000;
+  text-shadow: 0 1px 8px rgba(255, 255, 255, 0.55);
+}
+
 .lock-screen__unlock:hover {
   background: rgba(255, 255, 255, 0.28);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62), 0 10px 32px rgba(8, 22, 40, 0.24);
@@ -401,7 +408,9 @@ body:not(.is-locked) .glass-toggle {
   font-size: 128px;
   line-height: normal;
   letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
+  /* no tabular-nums: the canvas that draws the glass digits (glass-fragment.js)
+     can't use tabular figures, so the box would be wider than the ink and the
+     digits would sit left of center */
 
   /* fallback (before glass applies): visible white text */
   color: rgba(255, 255, 255, 0.93);

@@ -76,7 +76,7 @@ export function renderLockScreen(root = document.body) {
       <div class="passcode-screen__content">
         <p class="passcode-screen__prompt">Pick a code, any code. Don't worry, it doesn't matter-I trash everything about you anyway.</p>
         <div class="passcode-screen__dots" aria-label="Passcode entry">
-          ${Array.from({ length: 6 }, () => '<span class="passcode-screen__dot"></span>').join('')}
+          ${Array.from({ length: 4 }, () => '<span class="passcode-screen__dot"></span>').join('')}
         </div>
         <div class="passcode-screen__keypad" aria-label="Number keypad">
           ${['1','2','3','4','5','6','7','8','9','','0','delete'].map((key) => key
@@ -89,7 +89,7 @@ export function renderLockScreen(root = document.body) {
     const close = () => passcode.remove();
     passcode.querySelector('.passcode-screen__close').addEventListener('click', close);
 
-    // Visual code entry only: any 6 digits unlock the OS. There is
+    // Visual code entry only: any 4 digits unlock the OS. There is
     // deliberately no validation, authentication, or backend.
     let entered = '';
     let unlocking = false;

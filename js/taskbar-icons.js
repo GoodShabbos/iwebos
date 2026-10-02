@@ -55,14 +55,6 @@ const files = () => icon('files', ['#ffffff', '#e4ecf8'], `
      <stop offset="0" stop-color="#4db1ff"/><stop offset="1" stop-color="#0a7aff"/>
    </linearGradient>`);
  
-const browser = () => icon('browser', ['#5ccbff', '#0a6cff'], `
-  <circle cx="32" cy="32" r="21" fill="none" stroke="#fff" stroke-width="2.6"/>
-  <g stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".85">
-    <path d="M32 12.5v3.2M32 48.3v3.2M12.5 32h3.2M48.3 32h3.2"/>
-  </g>
-  <path d="M44 20 L28.2 28.2 L35.8 35.8 Z" fill="#ff453a"/>
-  <path d="M20 44 L28.2 28.2 L35.8 35.8 Z" fill="#f2f2f7"/>`);
- 
 const notepad = () => icon('notes', ['#ffffff', '#f1f1f6'], `
   <rect x="0" y="0" width="${S}" height="19" fill="#ffd60a"/>
   <rect x="0" y="18" width="${S}" height=".9" fill="#000" opacity=".1"/>
@@ -86,24 +78,6 @@ const terminal = () => icon('term', ['#35353a', '#050506'], `
         stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M34 44h14" stroke="#fff" stroke-width="4.6" stroke-linecap="round"/>`);
  
-const photos = () => {
-  const colors = ['#ff453a', '#ff9f0a', '#ffd60a', '#32d74b', '#64d2ff', '#0a84ff', '#bf5af2', '#ff375f'];
-  const petals = colors.map((c, i) =>
-    `<ellipse cx="32" cy="21.5" rx="7.4" ry="11" fill="${c}" opacity=".82"
-       transform="rotate(${i * 45} 32 32)" style="mix-blend-mode:multiply"/>`).join('');
-  return icon('photos', ['#ffffff', '#eeeef3'], petals);
-};
- 
-const calendar = () => {
-  const now = new Date();
-  const wd = now.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-  return icon('cal', ['#ffffff', '#f1f1f6'], `
-    <text x="32" y="21" text-anchor="middle" fill="#ff3b30" font-size="10.5" font-weight="700"
-          letter-spacing=".6" font-family="SF Pro Display,-apple-system,system-ui,sans-serif">${wd}</text>
-    <text x="32" y="50" text-anchor="middle" fill="#1c1c1e" font-size="31" font-weight="300"
-          letter-spacing="-1" font-family="SF Pro Display,-apple-system,system-ui,sans-serif">${now.getDate()}</text>`);
-};
- 
 const settings = () => {
   const teeth = Array.from({ length: 8 }, (_, i) =>
     `<rect x="28" y="10.5" width="8" height="10" rx="2.4" transform="rotate(${i * 45} 32 32)"/>`).join('');
@@ -116,15 +90,17 @@ const settings = () => {
      </linearGradient>`);
 };
  
+const credits = () => icon('credits', ['#ff7eb3', '#b04dff'], `
+  <circle cx="32" cy="32" r="19" fill="none" stroke="#fff" stroke-width="3"/>
+  <circle cx="32" cy="22.5" r="3.2" fill="#fff"/>
+  <path d="M32 29.5v14" stroke="#fff" stroke-width="4.2" stroke-linecap="round"/>`);
+
 // Order is the order shown on the taskbar.
 export const TASKBAR_APPS = [
   { id: 'files',      label: 'File Explorer', svg: files },
-  { id: 'browser',    label: 'Browser',       svg: browser },
   { id: 'notepad',    label: 'Notepad',       svg: notepad },
-  { id: 'calculator', label: 'Calculator',    svg: calculator },
   { id: 'terminal',   label: 'Terminal',      svg: terminal },
-  { id: 'photos',     label: 'Photos',        svg: photos },
-  { id: 'calendar',   label: 'Calendar',      svg: calendar },
+  { id: 'calculator', label: 'Calculator',    svg: calculator },
   { id: 'settings',   label: 'Settings',      svg: settings },
+  { id: 'credits',    label: 'Credits',       svg: credits },
 ];
- 

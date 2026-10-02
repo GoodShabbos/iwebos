@@ -8,6 +8,8 @@ import { renderWallpaperCycler } from './wallpaper-cycler.js';
 import { renderLockScreen } from './lock-screen.js';
 import { renderTaskbar } from './taskbar.js';
 import { renderLogo } from './logo.js';
+import { openCredits } from './credits-window.js';
+import { openSettings } from './settings-window.js';
 
 function renderShell(rootEl) {
   rootEl.innerHTML = '';
@@ -20,6 +22,10 @@ function renderShell(rootEl) {
     renderTaskbar(document.body);
     renderLogo(document.body);
   }, { once: true });
+  document.addEventListener('app-launch', (e) => {
+    if (e.detail.id === 'credits') openCredits();
+    if (e.detail.id === 'settings') openSettings();
+  });
 }
 
 export function boot() {
