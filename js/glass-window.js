@@ -69,10 +69,12 @@ export function createGlassWindow({ title, className = '', width = 560, height =
 
   const w = Math.min(width, innerWidth - 40);
   const h = Math.min(height, innerHeight - 140);
+  // cascade each new window a little so stacked windows stay visible
+  const cascade = (document.querySelectorAll('.glass-window').length % 6) * 28;
   el.style.width = `${w}px`;
   el.style.height = `${h}px`;
-  el.style.left = `${Math.max(12, (innerWidth - w) / 2)}px`;
-  el.style.top = `${Math.max(12, (innerHeight - h) / 2 - 40)}px`;
+  el.style.left = `${Math.max(12, (innerWidth - w) / 2 + cascade)}px`;
+  el.style.top = `${Math.max(12, (innerHeight - h) / 2 - 40 + cascade)}px`;
   document.body.appendChild(el);
 
   const focus = () => { el.style.zIndex = String(++zTop); };
@@ -174,7 +176,8 @@ export function createGlassWindow({ title, className = '', width = 560, height =
   // ---- close ----
   let closed = false;
   const onKey = (e) => {
-    if (e.key === 'Escape' && Number(el.style.zIndex) === zTop) close();
+    // Escape closes the front window — but not while typing in a field
+    if (e.key === 'Escape' && Number(el.style.zIndex) === zTop && !e.target.closest?.('input, textarea')) close();
   };
   function close() {
     if (closed) return;

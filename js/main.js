@@ -10,6 +10,8 @@ import { renderTaskbar } from './taskbar.js';
 import { renderLogo } from './logo.js';
 import { openCredits } from './credits-window.js';
 import { openSettings } from './settings-window.js';
+import { openNotepad } from './notepad-window.js';
+import { openFiles } from './files-window.js';
 
 function renderShell(rootEl) {
   rootEl.innerHTML = '';
@@ -25,6 +27,8 @@ function renderShell(rootEl) {
   document.addEventListener('app-launch', (e) => {
     if (e.detail.id === 'credits') openCredits();
     if (e.detail.id === 'settings') openSettings();
+    if (e.detail.id === 'notepad') openNotepad();
+    if (e.detail.id === 'files') openFiles();
   });
 }
 
