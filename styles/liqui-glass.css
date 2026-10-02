@@ -1,0 +1,141 @@
+/* liqui glass — surface anatomy.
+ *
+ * This is the part of the glass that utilities cannot express and users must
+ * not edit: the two stacked backdrop layers (A = blur/saturate, B =
+ * displacement-only), the specular image plane, and the stacking order that
+ * keeps content above all of it. It is imported by LiquiGlass.tsx so consumers
+ * cannot forget it.
+ *
+ * Design tokens live in tokens.css (or, for registry users, in their own
+ * globals.css via each item's `cssVars`). Every var() below carries a fallback
+ * so a surface still renders if no token layer is present at all.
+ */
+
+/* In `base` so these stay defaults rather than rules. They are the properties a
+   surface is most often asked to change from outside, and unlayered they win
+   every such attempt no matter how specific the override: an unlayered rule
+   outranks *any* layered one, and Tailwind ships its utilities in a layer. That
+   is not a specificity problem `:where()` can fix — it silently kept `fixed` on
+   a glass dialog rendering as `relative`, which left the popup wherever the
+   document flow put it instead of centred on the viewport.
+
+   `base` is Tailwind's own, declared before `utilities`, so utilities win. With
+   no Tailwind present the layer is created here and any unlayered consumer CSS
+   beats it — which is what a default should do. The structural rules below stay
+   unlayered: nothing outside should be overriding the surface anatomy. */
+@layer base {
+  .liqui-glass {
+    position: relative;
+    isolation: isolate;
+    border-radius: var(--lq-radius, 16px);
+    color: var(--lq-text, inherit);
+  }
+}
+
+.liqui-glass--elevated {
+  box-shadow: var(
+    --lq-shadow,
+    0 24px 60px rgba(10, 15, 40, 0.35),
+    0 4px 14px rgba(10, 15, 40, 0.18)
+  );
+}
+
+.liqui-glass__backdrop,
+.liqui-glass__tint,
+.liqui-glass__shine {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.liqui-glass__backdrop {
+  z-index: 0;
+}
+
+/* Displacement-only layer above the blur layer; fades in once its feImage
+   map has decoded so refraction materializes without a frost jump. */
+.liqui-glass__refract {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Applied only while the filter is cold (feImage decoding); removed after it
+   plays so display:none → shown toggles don't restart it. */
+.liqui-glass__refract--fade,
+.liqui-glass__specular--fade {
+  animation: lq-fade-in 0.18s ease-out;
+}
+
+@keyframes lq-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.liqui-glass__tint {
+  z-index: 1;
+  background: linear-gradient(
+    135deg,
+    var(--lq-tint, rgba(255, 255, 255, 0.48)),
+    var(--lq-tint-deep, rgba(255, 255, 255, 0.14))
+  );
+}
+
+/* Clear tier has no backdrop-filter to quiet the background, so the tint carries
+   the legibility burden alone. It gets there by compositing a neutral wash
+   *under* whatever tint is in play, rather than by overriding --lq-tint.
+   Overriding it would win: a component's retint (the accent a checked Checkbox
+   or Switch sets on itself) lands on this same element from Tailwind's utility
+   layer, and layered rules lose to this unlayered file — so a clear switch could
+   not show "on" at all. The wash reproduces the densities the override used to
+   hardcode, and an accent tint simply composites on top of it. */
+.liqui-glass--clear .liqui-glass__tint {
+  background-image:
+    linear-gradient(
+      135deg,
+      var(--lq-tint, rgba(255, 255, 255, 0.48)),
+      var(--lq-tint-deep, rgba(255, 255, 255, 0.14))
+    ),
+    linear-gradient(135deg, var(--lq-clear-wash), var(--lq-clear-wash-deep));
+}
+
+.liqui-glass--clear {
+  --lq-clear-wash: rgba(255, 255, 255, 0.55);
+  --lq-clear-wash-deep: rgba(255, 255, 255, 0.42);
+}
+
+[data-theme='dark'] .liqui-glass--clear,
+.dark .liqui-glass--clear {
+  --lq-clear-wash: rgba(30, 32, 46, 0.52);
+  --lq-clear-wash-deep: rgba(18, 20, 32, 0.47);
+}
+
+/* Normal-lit specular image (refraction tier): the arc of light along the
+   profile that makes the rim read as polished glass. */
+.liqui-glass__specular {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 2;
+  background-size: 100% 100%;
+}
+
+/* Cheap fallback shine: bright top-left catch-light, faint bottom rim. */
+.liqui-glass__shine {
+  z-index: 2;
+  box-shadow:
+    inset 0 1px 1px var(--lq-rim-hi, rgba(255, 255, 255, 0.85)),
+    inset 1px 0 1px 0.5px
+      color-mix(in srgb, var(--lq-rim-hi, rgba(255, 255, 255, 0.85)) 60%, transparent),
+    inset -1px -1px 1px var(--lq-rim-lo, rgba(255, 255, 255, 0.28));
+}
+
+.liqui-glass__content {
+  position: relative;
+  z-index: 3;
+}

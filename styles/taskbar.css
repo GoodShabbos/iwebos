@@ -1,0 +1,272 @@
+/* taskbar.css — the logged-in OS: login transition, glass taskbar, and the
+   corner controls lifted above it. Same glass material as .glass-toggle. */
+ 
+:root {
+  --taskbar-h: 66px;
+  --taskbar-gap: 12px;      /* distance from the screen edges */
+  --taskbar-radius: 24px;
+  --controls-gap: 16px;     /* space between the taskbar and the corner buttons */
+}
+ 
+/* ---- login transition: dissolve the lock layers ---- */
+.passcode-screen.is-unlocking {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 420ms ease-out;
+}
+ 
+.lock-screen.is-unlocking {
+  pointer-events: none;
+}
+ 
+.lock-screen.is-unlocking .lock-screen__unlock {
+  opacity: 0;
+  transform: translateX(-50%) translateY(10px);
+  pointer-events: none;
+  transition: opacity 320ms ease-out, transform 320ms ease-out;
+}
+ 
+/* ---- the taskbar ---- */
+.taskbar {
+  position: fixed;
+  left: var(--taskbar-gap);
+  right: var(--taskbar-gap);
+  bottom: var(--taskbar-gap);
+  z-index: 700; /* above the clock (500), below the corner buttons (800) */
+  height: var(--taskbar-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.35);        /* hairline glass edge */
+  border-radius: var(--taskbar-radius);
+  background: rgba(255, 255, 255, 0.10);               /* faint tint over the lens */
+  color: rgba(255, 255, 255, 0.95);
+  font-family: "SF Pro Display", -apple-system, system-ui, sans-serif;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),           /* specular top edge */
+    inset 0 -1px 0 rgba(255, 255, 255, 0.12),
+    0 8px 28px rgba(0, 0, 0, 0.28);                    /* float shadow */
+  /* overflow stays visible so hovered icons and tooltips can rise out of the bar;
+     the lens clips itself to the rounded shape */
+  /* Slide up only — no opacity, which would turn this into a backdrop root
+     and stop the lens from seeing the wallpaper while it animates. */
+  animation: taskbar-rise 720ms cubic-bezier(0.34, 1.25, 0.42, 1) 120ms both;
+}
+ 
+.taskbar__items {
+  position: relative;
+  z-index: 1;        /* above the lens */
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 100%;
+}
+ 
+@keyframes taskbar-rise {
+  from { transform: translateY(calc(100% + var(--taskbar-gap) + 8px)); }
+  to   { transform: translateY(0); }
+}
+ 
+/* ---- pinned apps ---- */
+.taskbar__slot {
+  position: relative;
+  animation: slot-pop 560ms cubic-bezier(0.34, 1.56, 0.64, 1) calc(480ms + var(--i, 0) * 50ms) both;
+}
+ 
+.taskbar__item {
+  display: block;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+ 
+.taskbar__item svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 4px 8px rgba(8, 14, 34, 0.32));
+}
+ 
+/* dock-style magnify: hovered icon lifts, its neighbours lean in a little */
+.taskbar__slot:hover .taskbar__item {
+  transform: translateY(-7px) scale(1.18);
+}
+.taskbar__slot:hover + .taskbar__slot .taskbar__item,
+.taskbar__slot:has(+ .taskbar__slot:hover) .taskbar__item {
+  transform: translateY(-2px) scale(1.07);
+}
+.taskbar__slot:active .taskbar__item {
+  transform: scale(0.92);
+  transition-duration: 90ms;
+}
+.taskbar__item:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 3px;
+  border-radius: 14px;
+}
+ 
+.taskbar__item.is-launching {
+  animation: taskbar-bounce 720ms cubic-bezier(0.28, 0.84, 0.42, 1);
+}
+ 
+/* glass tooltip */
+.taskbar__slot::after {
+  content: attr(data-label);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 16px);
+  transform: translate(-50%, 6px);
+  padding: 7px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(28, 32, 48, 0.42);
+  -webkit-backdrop-filter: blur(18px) saturate(1.7);
+  backdrop-filter: blur(18px) saturate(1.7);
+  color: #fff;
+  font: 600 13px/1 "SF Pro Display", -apple-system, system-ui, sans-serif;
+  white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 6px 18px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease-out, transform 220ms cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+.taskbar__slot:hover::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  transition-delay: 220ms;
+}
+ 
+@keyframes slot-pop {
+  from { transform: translateY(18px) scale(0.55); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+ 
+@keyframes taskbar-bounce {
+  0%   { transform: translateY(0); }
+  28%  { transform: translateY(-20px); }
+  52%  { transform: translateY(0); }
+  72%  { transform: translateY(-8px); }
+  100% { transform: translateY(0); }
+}
+ 
+/* ---- corner buttons: rotate wallpapers + dark/light, lifted above the bar ---- */
+body.is-unlocked .glass-toggle {
+  bottom: calc(var(--taskbar-gap) + var(--taskbar-h) + var(--controls-gap));
+  /* animation (not transition): the wallpaper code stamps an inline
+     `transition` on these buttons, which would swallow a bottom transition */
+  animation: controls-rise 720ms cubic-bezier(0.34, 1.25, 0.42, 1) 120ms both;
+}
+ 
+@keyframes controls-rise {
+  from { bottom: 24px; }
+}
+ 
+/* Reduced transparency: opaque bar instead of the lens. */
+@media (prefers-reduced-transparency: reduce) {
+  .taskbar {
+    background: rgba(36, 40, 58, 0.78);
+  }
+}
+ 
+@media (prefers-reduced-motion: reduce) {
+  .taskbar,
+  .taskbar__slot,
+  .taskbar__item.is-launching,
+  body.is-unlocked .glass-toggle {
+    animation-duration: 0.01ms;
+    animation-delay: 0s;
+  }
+  .passcode-screen.is-unlocking,
+  .lock-screen.is-unlocking .lock-screen__unlock {
+    transition-duration: 0.01ms;
+  }
+}
+ 
+/* ---- iWebOS logo: glass capsule, top-left (shown after login) ---- */
+.os-logo {
+  position: fixed;
+  top: 24px;
+  left: 24px;
+  z-index: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 48px;
+  padding: 0 20px 0 9px;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.10);
+  color: rgba(255, 255, 255, 0.97);
+  font-family: "SF Pro Display", -apple-system, system-ui, sans-serif;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.12),
+    0 8px 28px rgba(0, 0, 0, 0.28);
+  user-select: none;
+  pointer-events: none;
+  /* slide only (no opacity — it would stop the lens seeing the wallpaper) */
+  animation: logo-drop 720ms cubic-bezier(0.34, 1.25, 0.42, 1) 200ms both;
+}
+ 
+.os-logo__mark,
+.os-logo__word {
+  position: relative;
+  z-index: 1; /* above the lens */
+}
+ 
+.os-logo__mark {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 2px 6px rgba(10, 20, 40, 0.28));
+}
+ 
+.os-logo__word {
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.015em;
+  text-shadow: 0 1px 10px rgba(10, 20, 40, 0.3);
+}
+ 
+@keyframes logo-drop {
+  from { transform: translateY(calc(-100% - 32px)); }
+  to   { transform: translateY(0); }
+}
+ 
+@media (prefers-reduced-transparency: reduce) {
+  .os-logo { background: rgba(36, 40, 58, 0.78); }
+}
+ 
+@media (prefers-reduced-motion: reduce) {
+  .os-logo { animation-duration: 0.01ms; animation-delay: 0s; }
+}
+ 
+/* ---- light mode: black text ----
+   body[data-wallpaper-mode] is set by wallpaper.js. Scoped to the logged-in
+   OS so the lock screen keeps its white type. */
+body.is-unlocked[data-wallpaper-mode="light"] .os-logo,
+body.is-unlocked[data-wallpaper-mode="light"] .glass-toggle {
+  color: #000;
+}
+ 
+body.is-unlocked[data-wallpaper-mode="light"] .os-logo__word {
+  text-shadow: 0 1px 8px rgba(255, 255, 255, 0.55);
+}
+ 
+body.is-unlocked[data-wallpaper-mode="light"] .taskbar__slot::after {
+  background: rgba(255, 255, 255, 0.5);
+  border-color: rgba(255, 255, 255, 0.7);
+  color: #000;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 6px 18px rgba(0, 0, 0, 0.14);
+}
+ 

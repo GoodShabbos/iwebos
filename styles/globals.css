@@ -1,13 +1,44 @@
-/* globals.css — TODO: reset, CSS variables, body backdrop, boot splash (style in a later pass) */
+/* globals.css — reset, CSS variables, body backdrop, boot splash (style in a later pass) */
+
+/* ---- SF Pro (self-hosted, from github.com/sahibjotsaggu/San-Francisco-Pro-Fonts) ---- */
+@font-face {
+  font-family: "SF Pro Display";
+  src: url("../assets/fonts/SF-Pro-Display-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro Display";
+  src: url("../assets/fonts/SF-Pro-Display-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
 html,
 body {
   height: 100%;
 }
 
+/* liqui accessibility requirement: users who prefer reduced transparency
+   get an opaque surface instead of the glass lens. */
+@media (prefers-reduced-transparency: reduce) {
+  .liqui-glass .liqui-glass__backdrop,
+  .liqui-glass .liqui-glass__refract {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .liqui-glass .liqui-glass__tint {
+    background: var(--lq-surface, rgba(255, 255, 255, 0.62));
+  }
+}
+
 body {
   margin: 0;
   min-height: 100vh;
-  background-color: #eef3f8; /* fallback while the wallpaper loads */
+  background-color: #000; /* dark boot canvas before the first wallpaper fades in */
   font-family: system-ui, sans-serif;
 }

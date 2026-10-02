@@ -25,6 +25,10 @@ npx serve .        # or: python -m http.server 8000
 - **Apps**: Welcome (about me), Notes (content-selection data pattern from Part 4), Photos, Terminal, About, Settings (glass intensity + wallpaper switch), Music, Browser (iframe), Arcade (mini-game), About This OS
 - **Wallpaper switcher** (multiple gradients/images in `assets/wallpapers/`)
 
+### Adding wallpapers
+
+The wallpaper cycler discovers numbered files automatically; no code edit is needed. Use consecutive names such as `light_mode_background-3.jpg` or `dark_mode_background-3.webp` in `assets/wallpapers/`. Supported extensions are `.jpg`, `.jpeg`, `.png`, and `.webp`.
+
 ## Structure
 
 ```
